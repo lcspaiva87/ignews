@@ -33,7 +33,7 @@ export default function Home({ product }: HomeProps) {
   )
 }
 export const getStaticProps: GetStaticProps = async () => {
-  const price = await stripe.prices.retrieve('price_1KQX0RDUI56wa4glznZ0u3Jl')
+  const price = await stripe.prices.retrieve('price_1KRJcRDUI56wa4gliUx7A3le')
   const product = {
     priceId: price.id,
     amount: new Intl.NumberFormat('en-US', {
@@ -42,7 +42,6 @@ export const getStaticProps: GetStaticProps = async () => {
     }).format(price.unit_amount / 100),
 
   }
-  console.log("product", product)
   return {
     props: {
       product,
