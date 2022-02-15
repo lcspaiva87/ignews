@@ -3,7 +3,21 @@ import Head from 'next/head'
 import { getPrismicClient } from '../../services/prismicConfiguration'
 import styles from './styles.module.scss'
 import Prismic from '@prismicio/client'
-export default function Posts() {
+import { RichText } from 'prismic-dom'
+
+type Post = {
+    slug: string
+    title: string;
+    excerpt: string;
+    updatedAt: string
+
+
+}
+interface PostProps {
+    posts: Post[]
+}
+export default function Posts({ posts }: PostProps) {
+    console.log("post",posts)
     return (
         <>
             <Head>
@@ -11,57 +25,45 @@ export default function Posts() {
             </Head>
             <main className={styles.container}>
                 <div className={styles.posts}>
-                    <a href="#">
-                        <time>ReactJS • 11 de Nov de 2020</time>
-                        <strong>Mapas com React usando Leaflet</strong>
-                        <p>Leaflet é uma biblioteca JavaScript open-source para trabalhar com Mapas em aplicações web e mobile. Pode ser simplesmente integrada a um site usando apenas HTML, CSS e JavaScript.
+                    {posts.map(post => (
+                        <a key={post.slug} href="#">
+                            <time>{post.updatedAt}</time>
+                            <strong>{post.title}</strong>
+                            <p>{post.excerpt}</p>
+                        </a>
+                    ))}
 
-                            Podemos também integrar a Leaflet ao React com a biblioteca React Leaflet, que tem suporte ao TypeScript sendo bastante simples de utilizar. Ambas serão utilizadas em nossa aplicação de demonstração.
-
-                            Somando todas essas tecnologias e conceitos, no final deste post vamos ter desenvolvido o app Entregas. Vai ser assim:</p>
-                    </a>
-                    <a href="#">
-                        <time>ReactJS • 11 de Nov de 2020</time>
-                        <strong>Mapas com React usando Leaflet</strong>
-                        <p>Leaflet é uma biblioteca JavaScript open-source para trabalhar com Mapas em aplicações web e mobile. Pode ser simplesmente integrada a um site usando apenas HTML, CSS e JavaScript.
-
-                            Podemos também integrar a Leaflet ao React com a biblioteca React Leaflet, que tem suporte ao TypeScript sendo bastante simples de utilizar. Ambas serão utilizadas em nossa aplicação de demonstração.
-
-                            Somando todas essas tecnologias e conceitos, no final deste post vamos ter desenvolvido o app Entregas. Vai ser assim:</p>
-                    </a>
-                    <a href="#">
-                        <time>ReactJS • 11 de Nov de 2020</time>
-                        <strong>Mapas com React usando Leaflet</strong>
-                        <p>Leaflet é uma biblioteca JavaScript open-source para trabalhar com Mapas em aplicações web e mobile. Pode ser simplesmente integrada a um site usando apenas HTML, CSS e JavaScript.
-
-                            Podemos também integrar a Leaflet ao React com a biblioteca React Leaflet, que tem suporte ao TypeScript sendo bastante simples de utilizar. Ambas serão utilizadas em nossa aplicação de demonstração.
-
-                            Somando todas essas tecnologias e conceitos, no final deste post vamos ter desenvolvido o app Entregas. Vai ser assim:</p>
-                    </a>
-                    <a href="#">
-                        <time>ReactJS • 11 de Nov de 2020</time>
-                        <strong>Mapas com React usando Leaflet</strong>
-                        <p>Leaflet é uma biblioteca JavaScript open-source para trabalhar com Mapas em aplicações web e mobile. Pode ser simplesmente integrada a um site usando apenas HTML, CSS e JavaScript.
-
-                            Podemos também integrar a Leaflet ao React com a biblioteca React Leaflet, que tem suporte ao TypeScript sendo bastante simples de utilizar. Ambas serão utilizadas em nossa aplicação de demonstração.
-
-                            Somando todas essas tecnologias e conceitos, no final deste post vamos ter desenvolvido o app Entregas. Vai ser assim:</p>
-                    </a>
                 </div>
             </main>
         </>
     )
+    
 }
 
 export const getStaticProps: GetStaticProps = async () => {
     const prismic = getPrismicClient()
-    const response = await prismic.query([
+    const response = await prismic.query<any>([
         Prismic.predicates.at('document.type', 'publication')
-    ], 
-    { fetch: ['publication.title', 'publication.content'], 
-    pageSize: 100 })
-    console.log("response",response)
-    return{
-        props:{}
+    ],
+        {
+            fetch: ['publication.title', 'publication.content'],
+            pageSize: 100
+        })
+
+    console.log(JSON.stringify(response, null, 2))
+    const posts = response.results.map(post => {
+        return {
+            slug: post.uid,
+            title: RichText.asText(post.data.title),
+            excerpt: post.data.content.find(content => content.type === 'paragraph')?.text ?? '',
+            updatedAt: new Date(post.last_publication_date).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+            })
+        }
+    })
+    return {
+        props: { posts }
     }
 }
