@@ -11,8 +11,6 @@ type Post = {
     title: string;
     excerpt: string;
     updatedAt: string
-
-
 }
 interface PostProps {
     posts: Post[]
@@ -42,6 +40,7 @@ export default function Posts({ posts }: PostProps) {
     )
 
 }
+
 
 export const getStaticProps: GetStaticProps = async () => {
     const prismic = getPrismicClient()
