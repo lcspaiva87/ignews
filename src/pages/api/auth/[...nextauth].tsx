@@ -4,7 +4,6 @@ import Providers from 'next-auth/providers';
 
 import { fauna } from '../../../services/fauna'
 export default NextAuth({
-  // Configure one or more authentication providers
   providers: [
     Providers.GitHub({
       clientId: process.env.GITHUB_CLIENT_ID,
@@ -12,13 +11,48 @@ export default NextAuth({
       scope: 'read:user',
     }),
   ],
-  // jwt:{
-  //   signingKey:process.env.SIGNING_KEY,
-  // },
   callbacks: {
+    async session(session) {
+      try {
+        const userActiveSubscription = await fauna.query(
+          q.Get(
+            q.Intersection([
+              q.Match(
+                q.Index('subscription_by_user_ref'),
+                q.Select(
+                  "ref",
+                  q.Get(
+                    q.Match(
+                      q.Index('user_by_email'),
+                      q.Casefold(session.user.email)
+                    )
+                  )
+                )
+              ),
+              q.Match(
+                q.Index('subscription_by_status'),
+                "active"
+              )
+            ])
+          )
+        )
+  
+        return {
+          ...session,
+          activeSubscription: userActiveSubscription
+        };
+      } catch(err) {
+        console.log("err",err)
+        return {
+          ...session,
+          activeSubscription: null
+        };
+      }
+    },
     async signIn(user, account, profile) {
       const { email } = user;
-      try {
+
+      try{
         await fauna.query(
           q.If(
             q.Not(
@@ -40,14 +74,14 @@ export default NextAuth({
               )
             )
           )
-
         )
-        return true
-      } catch (error) {
 
-        console.log("error", error)
-        return false
+        return true;
+      } catch {
+        return false;
       }
-    },
+
+
+    }
   }
 })
