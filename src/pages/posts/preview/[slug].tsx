@@ -1,11 +1,15 @@
 import { GetStaticProps } from "next"
+import { useSession } from "next-auth/client";
+import { route } from "next/dist/server/router";
 
 import Head from "next/head"
+import Link from "next/link";
+import { useRouter } from "next/router";
 import { RichText } from "prismic-dom"
+import { useEffect } from "react";
 import { getPrismicClient } from "../../../services/prismicConfiguration";
 
 import styles from '../post.module.scss'
-
 interface PostPreviewProps {
   post: {
     slug: string;
@@ -16,38 +20,49 @@ interface PostPreviewProps {
 }
 
 export default function PostPreview({ post }: PostPreviewProps) {
-  console.log("post",post)
+  const [session] = useSession()
+  const router = useRouter()
+  useEffect(() => {
+    if (session?.activeSubscription) {
+      router.push(`post/${post.slug}`)
+    }
+  }, [session])
   return (
     <>
       <Head>
-        {/* <title>{post.title} | Ignews</title> */}
+        <title>{post.title} | Ignews</title>
       </Head>
 
       <main className={styles.container}>
         <article className={styles.post}>
-          {/* <h1>{post.title}</h1> */}
-          {/* <time>{post.updatedAt}</time> */}
+          <h1>{post.title}</h1>
+          <time>{post.updatedAt}</time>
           <div
             className={`${styles.postContent} ${styles.previewContent}`}
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
+          <div className={styles.continueReadig}>
+            Wanna continue reading?
+            <Link href='/'>
+              <a> Subscribew now🤗</a>
+            </Link>
+          </div>
         </article>
       </main>
     </>
   );
 }
 
-export const getStaticpaths = () => {
+export const getStaticPaths = () => {
   return {
     paths: [],
-    fallback:'blocking'
+    fallback: 'blocking',
   }
 }
 
-export const getSaticProps: GetStaticProps = async ({ params }) => {
+export const getStaticProps: GetStaticProps = async ({ params }) => {
 
   const { slug } = params;
-
 
   const prismic = getPrismicClient();
 
@@ -56,7 +71,7 @@ export const getSaticProps: GetStaticProps = async ({ params }) => {
   const post = {
     slug,
     title: RichText.asText(response.data.title),
-    content: RichText.asHtml(response.data.content.splice(0,3)),
+    content: RichText.asHtml(response.data.content.splice(0, 3)),
     updatedAt: new Date(response.last_publication_date).toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'long',
