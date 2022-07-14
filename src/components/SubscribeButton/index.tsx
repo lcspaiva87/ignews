@@ -4,10 +4,8 @@ import { getStripeJs } from '../../pages/api/stripe-js';
 import { api } from '../../services/api';
 import styles from './styles.module.scss'
 
-interface SubscribeButtonPorps {
-    princeId: string;
-}
-export function SubscribeButton({ princeId }: SubscribeButtonPorps) {
+
+export function SubscribeButton() {
     const [session] = useSession();
     const router = useRouter()
     async function handleSubscribe() {
@@ -41,7 +39,7 @@ export function SubscribeButton({ princeId }: SubscribeButtonPorps) {
             className={styles.subscribeButton}
             onClick={handleSubscribe}
         >
-            subscribe now
+           Subscribe now
         </button>
     )
 }
